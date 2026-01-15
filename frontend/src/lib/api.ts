@@ -407,6 +407,19 @@ class ApiClient {
   }
 
   // Export
+  getExportUrl(type: string, params?: Record<string, unknown>): string {
+    const searchParams = new URLSearchParams();
+    if (params) {
+      Object.entries(params).forEach(([key, value]) => {
+        if (value !== undefined && value !== null && value !== "all") {
+          searchParams.append(key, String(value));
+        }
+      });
+    }
+    const query = searchParams.toString();
+    return `${this.baseUrl}/export/${type}${query ? `?${query}` : ""}`;
+  }
+
   async exportTransactions(params?: {
     format?: "csv" | "xlsx";
     source?: Source;
