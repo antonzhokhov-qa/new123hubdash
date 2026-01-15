@@ -16,12 +16,16 @@ export interface Transaction {
   merchant_name?: string;
   project_id?: string;
   project_name?: string;
+  project?: string;
   customer_id?: string;
   payment_method?: string;
   country?: string;
   created_at: string;
   updated_at?: string;
   metadata?: Record<string, unknown>;
+  // Extended fields
+  client_operation_id?: string;
+  source_id?: string;
 }
 
 export interface MetricsOverview {
