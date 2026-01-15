@@ -228,7 +228,7 @@ export default function ReconciliationPage() {
                           : "text-text-muted"
                       )}
                     >
-                      {disc.amount_diff !== null
+                      {disc.amount_diff != null
                         ? formatCurrency(Math.abs(disc.amount_diff), "INR")
                         : "-"}
                     </TableCell>
