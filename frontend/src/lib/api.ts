@@ -96,20 +96,20 @@ export interface ReconciliationSummary {
   match_rate: number;
   last_reconciliation_at: string | null;
   date?: string;
-  total_transactions?: number;
+  total_transactions: number;
   // Extended structure for reconciliation page
-  matched?: {
+  matched: {
     count: number;
     percentage: number;
   };
-  discrepancies?: {
+  discrepancies: {
     count: number;
     by_type: {
       amount: number;
       status: number;
     };
   };
-  missing?: {
+  missing: {
     count: number;
     missing_vima: number;
     missing_payshack: number;

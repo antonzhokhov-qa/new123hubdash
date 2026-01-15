@@ -90,6 +90,24 @@ export const mockReconciliationSummary: ReconciliationSummary = {
   total_discrepancies: 23,
   match_rate: 96.1,
   last_reconciliation_at: new Date().toISOString(),
+  total_transactions: 11713,
+  matched: {
+    count: 11234,
+    percentage: 96.1,
+  },
+  discrepancies: {
+    count: 23,
+    by_type: {
+      amount: 15,
+      status: 8,
+    },
+  },
+  missing: {
+    count: 456,
+    missing_vima: 234,
+    missing_payshack: 222,
+  },
+  run_at: new Date().toISOString(),
 };
 
 export const mockDiscrepancies: (Discrepancy & { discrepancy_type?: string; match_status?: string })[] = [
