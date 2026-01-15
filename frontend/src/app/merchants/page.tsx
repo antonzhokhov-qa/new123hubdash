@@ -136,7 +136,7 @@ export default function MerchantsPage() {
           value={
             conversionData?.data?.projects.length
               ? `${(
-                  conversionData.data.projects.reduce((s, p) => s + p.conversion_rate, 0) /
+                  conversionData.data.projects.reduce((s: number, p: { conversion_rate: number }) => s + p.conversion_rate, 0) /
                   conversionData.data.projects.length
                 ).toFixed(1)}%`
               : "0%"
