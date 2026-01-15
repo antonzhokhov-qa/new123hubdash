@@ -96,6 +96,7 @@ export interface ReconciliationSummary {
   match_rate: number;
   last_reconciliation_at: string | null;
   date?: string;
+  total_transactions?: number;
 }
 
 export interface ReconciliationSummaryResponse {
