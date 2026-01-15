@@ -95,6 +95,11 @@ export interface ReconciliationSummary {
   total_discrepancies: number;
   match_rate: number;
   last_reconciliation_at: string | null;
+  date?: string;
+}
+
+export interface ReconciliationSummaryResponse {
+  data: ReconciliationSummary;
 }
 
 export interface Discrepancy {
@@ -324,15 +329,19 @@ class ApiClient {
   }
 
   // Reconciliation
-  async getReconciliationSummary(): Promise<ReconciliationSummary> {
-    return this.request<ReconciliationSummary>("/reconciliation/summary");
+  async getReconciliationSummary(date?: string): Promise<ReconciliationSummaryResponse> {
+    const query = date ? `?date=${date}` : "";
+    const data = await this.request<ReconciliationSummary>(`/reconciliation/summary${query}`);
+    return { data };
   }
 
   async getDiscrepancies(params?: {
+    from_date?: string;
+    to_date?: string;
     type?: string;
     page?: number;
-    page_size?: number;
-  }): Promise<{ items: Discrepancy[]; total: number }> {
+    limit?: number;
+  }): Promise<{ data: Discrepancy[]; meta: { page: number; limit: number; total: number; total_pages: number } }> {
     const searchParams = new URLSearchParams();
     if (params) {
       Object.entries(params).forEach(([key, value]) => {
@@ -342,9 +351,31 @@ class ApiClient {
       });
     }
     const query = searchParams.toString();
-    return this.request<{ items: Discrepancy[]; total: number }>(
+    const result = await this.request<{ items: Discrepancy[]; total: number }>(
       `/reconciliation/discrepancies${query ? `?${query}` : ""}`
     );
+    const page = params?.page || 1;
+    const limit = params?.limit || 50;
+    return {
+      data: result.items,
+      meta: {
+        page,
+        limit,
+        total: result.total,
+        total_pages: Math.ceil(result.total / limit),
+      },
+    };
+  }
+
+  async runReconciliation(date: string): Promise<{ data: { run_id: string; status: string; message: string } }> {
+    const result = await this.request<{ run_id: string; status: string; message: string }>(
+      `/reconciliation/run`,
+      {
+        method: "POST",
+        body: JSON.stringify({ date }),
+      }
+    );
+    return { data: result };
   }
 
   // Export

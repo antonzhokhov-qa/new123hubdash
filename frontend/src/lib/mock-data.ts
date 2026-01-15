@@ -92,12 +92,14 @@ export const mockReconciliationSummary: ReconciliationSummary = {
   last_reconciliation_at: new Date().toISOString(),
 };
 
-export const mockDiscrepancies: Discrepancy[] = [
+export const mockDiscrepancies: (Discrepancy & { discrepancy_type?: string; match_status?: string })[] = [
   {
     id: "disc_001",
     vima_id: "vima_tx_12345",
     payshack_id: "ps_tx_12345",
     type: "amount_mismatch",
+    discrepancy_type: "amount_mismatch",
+    match_status: "mismatched",
     vima_amount: 1500.00,
     payshack_amount: 1495.00,
     difference: 5.00,
@@ -107,6 +109,8 @@ export const mockDiscrepancies: Discrepancy[] = [
     id: "disc_002",
     vima_id: "vima_tx_12346",
     type: "missing_payshack",
+    discrepancy_type: "missing_payshack",
+    match_status: "unmatched",
     vima_amount: 2300.00,
     created_at: new Date().toISOString(),
   },
@@ -114,6 +118,8 @@ export const mockDiscrepancies: Discrepancy[] = [
     id: "disc_003",
     payshack_id: "ps_tx_12347",
     type: "missing_vima",
+    discrepancy_type: "missing_vima",
+    match_status: "unmatched",
     payshack_amount: 890.00,
     created_at: new Date().toISOString(),
   },
