@@ -52,7 +52,7 @@ export default function ReconciliationPage() {
     runReconciliation.mutate(selectedDate);
   };
 
-  const getDiscrepancyBadge = (type: string | null) => {
+  const getDiscrepancyBadge = (type: string | null | undefined) => {
     switch (type) {
       case "amount":
         return <span className="text-status-pending">Amount Mismatch</span>;
