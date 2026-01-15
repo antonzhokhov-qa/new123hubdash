@@ -44,8 +44,8 @@ interface TrendChartContentProps {
 
 export function TrendChartContent({ params, height = 220 }: TrendChartContentProps) {
   const { data, isLoading } = useMetricsTrends({
-    from_date: params.from_date,
-    to_date: params.to_date,
+    from_date: params.from_date || "",
+    to_date: params.to_date || "",
     source: params.source,
     granularity: params.granularity as any || "hour",
   });
@@ -159,8 +159,9 @@ export function HeatmapChartContent({ params, height = 220 }: HeatmapChartConten
     );
   }
 
-  const cellMap = new Map<string, typeof heatmapData.cells[0]>();
-  heatmapData.cells.forEach(cell => {
+  type CellType = { x: string; y: string; value: number; count?: number };
+  const cellMap = new Map<string, CellType>();
+  heatmapData.cells.forEach((cell: CellType) => {
     cellMap.set(`${cell.x}-${cell.y}`, cell);
   });
 
@@ -554,8 +555,8 @@ export function DonutChartContent({ params, type, height = 180 }: DonutChartCont
         { name: "Pending", value: metrics.by_status.pending?.count || 0, color: "#F59E0B" },
       ]
     : [
-        { name: "Vima", value: metrics.by_source.vima?.count || 0, color: "#3B82F6" },
-        { name: "PayShack", value: metrics.by_source.payshack?.count || 0, color: "#A855F7" },
+        { name: "Vima", value: metrics.by_source?.vima?.count || 0, color: "#3B82F6" },
+        { name: "PayShack", value: metrics.by_source?.payshack?.count || 0, color: "#A855F7" },
       ];
 
   const total = chartData.reduce((s, d) => s + d.value, 0);

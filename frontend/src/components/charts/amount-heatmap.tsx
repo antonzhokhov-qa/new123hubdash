@@ -138,9 +138,9 @@ export function AmountHeatmap({
             <div className="flex items-center justify-between mt-3">
               <div className="flex items-center gap-2">
                 {buckets.slice(0, 3).map((bucket, i) => (
-                  <div key={bucket} className="flex items-center gap-1">
+                  <div key={bucket.range} className="flex items-center gap-1">
                     <div className={cn("w-3 h-3 rounded-sm", BUCKET_COLORS[i])} />
-                    <span className="text-xs text-text-muted">{bucket}</span>
+                    <span className="text-xs text-text-muted">{bucket.range}</span>
                   </div>
                 ))}
               </div>

@@ -12,19 +12,19 @@ import {
 } from "recharts";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { AmountBucketPoint } from "@/lib/api";
+import { AmountHeatmapPoint } from "@/lib/api";
 import { formatNumber, formatCurrency } from "@/lib/utils";
 
 interface AmountHistogramProps {
   title: string;
-  data?: AmountBucketPoint[];
+  data?: AmountHeatmapPoint[];
   buckets?: string[];
   isLoading?: boolean;
 }
 
 // Aggregate by bucket (sum across all hours)
 function aggregateByBucket(
-  data: AmountBucketPoint[], 
+  data: AmountHeatmapPoint[], 
   buckets: string[]
 ): Array<{ bucket: string; count: number; amount: number; bucketIndex: number }> {
   const bucketMap = new Map<number, { count: number; amount: number }>();
@@ -39,7 +39,7 @@ function aggregateByBucket(
     const existing = bucketMap.get(point.bucket_index);
     if (existing) {
       existing.count += point.count;
-      existing.amount += point.total_amount;
+      existing.amount += point.amount || 0;
     }
   });
 

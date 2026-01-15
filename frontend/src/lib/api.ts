@@ -59,6 +59,10 @@ export interface MetricsOverview {
   conversion_rate: number;
   avg_ticket: number;
   avg_ticket_usd: number;
+  by_source?: {
+    vima?: { count: number; amount: number };
+    payshack?: { count: number; amount: number };
+  };
 }
 
 export interface MetricsByProject {
@@ -143,8 +147,13 @@ export interface Discrepancy {
 export interface ConversionByProject {
   project_id: string;
   project_name: string;
+  project?: string;
   total: number;
+  total_count: number;
   successful: number;
+  success_count: number;
+  failed_count: number;
+  avg_ticket: number;
   conversion_rate: number;
 }
 
@@ -153,15 +162,25 @@ export interface HourlyDistributionPoint {
   total: number;
   successful: number;
   conversion_rate: number;
+  count: number;
+  success_count: number;
+  failed_count: number;
 }
 
 export interface CountryMetrics {
   country: string;
   country_code: string;
+  country_name: string;
   transactions: number;
+  total_count: number;
+  total_amount: number;
   volume: number;
   volume_usd: number;
   success_rate: number;
+  percentage_of_total: number;
+  success_count: number;
+  failed_count: number;
+  conversion_rate: number;
 }
 
 export interface HeatmapResponse {
@@ -170,11 +189,38 @@ export interface HeatmapResponse {
     hour: number;
     value: number;
   }>;
+  cells: Array<{
+    x: string;
+    y: string;
+    value: number;
+    count?: number;
+  }>;
+  x_labels: string[];
+  y_labels: string[];
+  min_value: number;
+  max_value: number;
+}
+
+export interface PeriodComparisonMetrics {
+  total_amount: number;
+  total_count: number;
+  conversion_rate: number;
+  avg_ticket: number;
+  success_count: number;
+  failed_count: number;
+  from_date: string;
+  to_date: string;
 }
 
 export interface PeriodComparisonResponse {
-  current: MetricsOverview;
-  previous: MetricsOverview;
+  current: PeriodComparisonMetrics;
+  previous: PeriodComparisonMetrics;
+  comparison: {
+    amount_change_percent: number;
+    count_change_percent: number;
+    conversion_change: number;
+    avg_ticket_change_percent: number;
+  };
   change: {
     transactions: number;
     volume: number;
