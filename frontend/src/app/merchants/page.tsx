@@ -164,7 +164,7 @@ export default function MerchantsPage() {
               </div>
             ) : (
               <div className="space-y-2">
-                {top5.map((m, i) => (
+                {top5.map((m: { project: string; total_count: number; conversion_rate: number }, i: number) => (
                   <div
                     key={m.project}
                     className="flex items-center justify-between p-2 rounded-lg hover:bg-background-secondary cursor-pointer"
@@ -214,7 +214,7 @@ export default function MerchantsPage() {
               </div>
             ) : (
               <div className="space-y-2">
-                {bottom5.slice().reverse().map((m, i) => (
+                {bottom5.slice().reverse().map((m: { project: string; total_count: number; conversion_rate: number }, i: number) => (
                   <div
                     key={m.project}
                     className="flex items-center justify-between p-2 rounded-lg hover:bg-background-secondary cursor-pointer"
