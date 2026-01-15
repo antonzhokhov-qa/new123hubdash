@@ -97,6 +97,24 @@ export interface ReconciliationSummary {
   last_reconciliation_at: string | null;
   date?: string;
   total_transactions?: number;
+  // Extended structure for reconciliation page
+  matched?: {
+    count: number;
+    percentage: number;
+  };
+  discrepancies?: {
+    count: number;
+    by_type: {
+      amount: number;
+      status: number;
+    };
+  };
+  missing?: {
+    count: number;
+    missing_vima: number;
+    missing_payshack: number;
+  };
+  run_at?: string;
 }
 
 export interface ReconciliationSummaryResponse {
