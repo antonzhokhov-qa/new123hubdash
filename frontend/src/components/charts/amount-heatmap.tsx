@@ -101,10 +101,10 @@ export function AmountHeatmap({
             {/* Grid */}
             <div className="space-y-[2px]">
               {buckets.map((bucket, bucketIndex) => (
-                <div key={bucket} className="flex items-center gap-[2px]">
+                <div key={bucket.range} className="flex items-center gap-[2px]">
                   {/* Bucket label */}
                   <div className="w-16 text-xs text-text-muted font-medium text-right pr-2">
-                    {bucket}
+                    {bucket.range}
                   </div>
                   
                   {/* Hour cells */}
@@ -124,8 +124,8 @@ export function AmountHeatmap({
                           count > 0 && intensityClass
                         )}
                         title={point 
-                          ? `${bucket} at ${hour}:00 - ${formatNumber(count)} transactions`
-                          : `${bucket} at ${hour}:00 - No data`
+                          ? `${bucket.range} at ${hour}:00 - ${formatNumber(count)} transactions`
+                          : `${bucket.range} at ${hour}:00 - No data`
                         }
                       />
                     );
