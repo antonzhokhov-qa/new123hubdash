@@ -36,6 +36,25 @@ export interface MetricsOverview {
     volume: number;
     success_rate: number;
   };
+  // Extended structure for dashboard
+  total: {
+    amount: number;
+    amount_usd: number;
+    count: number;
+  };
+  by_status: {
+    success: { amount: number; amount_usd: number; count: number };
+    failed: { amount: number; amount_usd: number; count: number };
+    pending: { amount: number; amount_usd: number; count: number };
+  };
+  trends: {
+    total_change: number;
+    success_change: number;
+    failed_change: number;
+  };
+  conversion_rate: number;
+  avg_ticket: number;
+  avg_ticket_usd: number;
 }
 
 export interface MetricsByProject {
