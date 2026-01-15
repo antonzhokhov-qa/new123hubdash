@@ -126,10 +126,15 @@ export interface Discrepancy {
   vima_id?: string;
   payshack_id?: string;
   type: "missing_vima" | "missing_payshack" | "amount_mismatch" | "status_mismatch";
+  discrepancy_type?: string;
+  match_status?: string;
   vima_amount?: number;
   payshack_amount?: number;
   difference?: number;
   created_at: string;
+  client_operation_id?: string;
+  vima_status?: string;
+  payshack_status?: string;
 }
 
 export interface ConversionByProject {
