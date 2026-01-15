@@ -81,30 +81,46 @@ async def get_metrics_overview(
     if project:
         conditions.append(Transaction.project == project)
 
-    # Query aggregates
+    # Query aggregates (including USD amounts)
     query = select(
         func.count(Transaction.id).label("total_count"),
         func.coalesce(func.sum(Transaction.amount), 0).label("total_amount"),
+        func.coalesce(func.sum(Transaction.amount_usd), 0).label("total_amount_usd"),
         func.count(case((Transaction.status == "success", 1))).label("success_count"),
         func.coalesce(
             func.sum(case((Transaction.status == "success", Transaction.amount))), 0
         ).label("success_amount"),
+        func.coalesce(
+            func.sum(case((Transaction.status == "success", Transaction.amount_usd))), 0
+        ).label("success_amount_usd"),
         func.count(case((Transaction.status == "failed", 1))).label("failed_count"),
         func.coalesce(
             func.sum(case((Transaction.status == "failed", Transaction.amount))), 0
         ).label("failed_amount"),
+        func.coalesce(
+            func.sum(case((Transaction.status == "failed", Transaction.amount_usd))), 0
+        ).label("failed_amount_usd"),
         func.count(case((Transaction.status == "pending", 1))).label("pending_count"),
         func.coalesce(
             func.sum(case((Transaction.status == "pending", Transaction.amount))), 0
         ).label("pending_amount"),
+        func.coalesce(
+            func.sum(case((Transaction.status == "pending", Transaction.amount_usd))), 0
+        ).label("pending_amount_usd"),
         func.count(case((Transaction.source == "vima", 1))).label("vima_count"),
         func.coalesce(
             func.sum(case((Transaction.source == "vima", Transaction.amount))), 0
         ).label("vima_amount"),
+        func.coalesce(
+            func.sum(case((Transaction.source == "vima", Transaction.amount_usd))), 0
+        ).label("vima_amount_usd"),
         func.count(case((Transaction.source == "payshack", 1))).label("payshack_count"),
         func.coalesce(
             func.sum(case((Transaction.source == "payshack", Transaction.amount))), 0
         ).label("payshack_amount"),
+        func.coalesce(
+            func.sum(case((Transaction.source == "payshack", Transaction.amount_usd))), 0
+        ).label("payshack_amount_usd"),
     ).where(and_(*conditions))
 
     result = await db.execute(query)
@@ -112,42 +128,52 @@ async def get_metrics_overview(
 
     total_count = row.total_count or 0
     total_amount = Decimal(str(row.total_amount or 0))
+    total_amount_usd = Decimal(str(row.total_amount_usd or 0))
     success_count = row.success_count or 0
 
     conversion_rate = (success_count / total_count * 100) if total_count > 0 else 0
     avg_ticket = (total_amount / total_count) if total_count > 0 else Decimal(0)
+    avg_ticket_usd = (total_amount_usd / total_count) if total_count > 0 else Decimal(0)
 
     metrics = MetricsOverview(
         period={"from": from_date.isoformat(), "to": to_date.isoformat()},
         total_count=total_count,
         total_amount=total_amount,
+        total_amount_usd=total_amount_usd,
         currency="INR",
+        display_currency="USD",
         by_status={
             "success": StatusMetrics(
                 count=row.success_count or 0,
                 amount=Decimal(str(row.success_amount or 0)),
+                amount_usd=Decimal(str(row.success_amount_usd or 0)),
             ),
             "failed": StatusMetrics(
                 count=row.failed_count or 0,
                 amount=Decimal(str(row.failed_amount or 0)),
+                amount_usd=Decimal(str(row.failed_amount_usd or 0)),
             ),
             "pending": StatusMetrics(
                 count=row.pending_count or 0,
                 amount=Decimal(str(row.pending_amount or 0)),
+                amount_usd=Decimal(str(row.pending_amount_usd or 0)),
             ),
         },
         by_source={
             "vima": StatusMetrics(
                 count=row.vima_count or 0,
                 amount=Decimal(str(row.vima_amount or 0)),
+                amount_usd=Decimal(str(row.vima_amount_usd or 0)),
             ),
             "payshack": StatusMetrics(
                 count=row.payshack_count or 0,
                 amount=Decimal(str(row.payshack_amount or 0)),
+                amount_usd=Decimal(str(row.payshack_amount_usd or 0)),
             ),
         },
         conversion_rate=round(conversion_rate, 2),
         avg_ticket=round(avg_ticket, 2),
+        avg_ticket_usd=round(avg_ticket_usd, 4),
     )
 
     # Cache result

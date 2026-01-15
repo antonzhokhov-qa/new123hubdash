@@ -7,10 +7,15 @@ from typing import Dict, Any, Optional
 
 import structlog
 
+from app.services.currency import currency_service
+
 logger = structlog.get_logger()
 
 # India Standard Time offset (UTC+5:30)
 IST_OFFSET = timedelta(hours=5, minutes=30)
+
+# Default INR to USD rate (fallback)
+DEFAULT_INR_USD_RATE = 0.012
 
 
 class PayShackNormalizer:
@@ -80,6 +85,12 @@ class PayShackNormalizer:
             # Order ID is the key for matching with Vima client_operation_id
             order_id = raw.get("orderId")
 
+            # Convert to USD using sync method (rate from static fallback)
+            fee = cls._extract_fee(raw)
+            inr_rate = currency_service.STATIC_RATES_TO_USD.get("INR", DEFAULT_INR_USD_RATE)
+            amount_usd = currency_service.convert_sync(amount, "INR", inr_rate)
+            fee_usd = currency_service.convert_sync(fee, "INR", inr_rate) if fee else None
+
             normalized = {
                 "source": "payshack",
                 "source_id": raw.get("txnId", ""),
@@ -90,7 +101,10 @@ class PayShackNormalizer:
                 "merchant_id": raw.get("clientId"),
                 "amount": amount,
                 "currency": "INR",  # PayShack is India-only
-                "fee": cls._extract_fee(raw),
+                "amount_usd": amount_usd,
+                "fee": fee,
+                "fee_usd": fee_usd,
+                "exchange_rate": Decimal(str(inr_rate)),
                 "status": status,
                 "original_status": original_status,
                 "user_id": None,
@@ -150,6 +164,12 @@ class PayShackNormalizer:
 
             order_id = raw.get("orderId")
 
+            # Convert to USD
+            fee = cls._extract_fee(raw)
+            inr_rate = currency_service.STATIC_RATES_TO_USD.get("INR", DEFAULT_INR_USD_RATE)
+            amount_usd = currency_service.convert_sync(amount, "INR", inr_rate)
+            fee_usd = currency_service.convert_sync(fee, "INR", inr_rate) if fee else None
+
             normalized = {
                 "source": "payshack",
                 "source_id": raw.get("txnId") or raw.get("transactionId", ""),
@@ -160,7 +180,10 @@ class PayShackNormalizer:
                 "merchant_id": raw.get("clientId"),
                 "amount": amount,
                 "currency": "INR",
-                "fee": cls._extract_fee(raw),
+                "amount_usd": amount_usd,
+                "fee": fee,
+                "fee_usd": fee_usd,
+                "exchange_rate": Decimal(str(inr_rate)),
                 "status": status,
                 "original_status": original_status,
                 "user_id": None,

@@ -56,7 +56,7 @@ async def export_transactions(
     result = await db.execute(query)
     transactions = result.scalars().all()
 
-    # Column definitions
+    # Column definitions (including USD amounts)
     columns = [
         ("ID", lambda t: str(t.id)),
         ("Source", lambda t: t.source),
@@ -66,6 +66,10 @@ async def export_transactions(
         ("Project", lambda t: t.project or ""),
         ("Amount", lambda t: float(t.amount)),
         ("Currency", lambda t: t.currency),
+        ("Amount USD", lambda t: float(t.amount_usd) if t.amount_usd else 0.0),
+        ("Fee", lambda t: float(t.fee) if t.fee else 0.0),
+        ("Fee USD", lambda t: float(t.fee_usd) if t.fee_usd else 0.0),
+        ("Exchange Rate", lambda t: float(t.exchange_rate) if t.exchange_rate else 0.0),
         ("Status", lambda t: t.status),
         ("Original Status", lambda t: t.original_status or ""),
         ("User Email", lambda t: t.user_email or ""),

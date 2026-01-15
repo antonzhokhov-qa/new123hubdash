@@ -8,6 +8,8 @@ from dateutil import parser as date_parser
 
 import structlog
 
+from app.services.currency import currency_service
+
 logger = structlog.get_logger()
 
 
@@ -87,6 +89,12 @@ class VimaNormalizer:
                 None
             )
 
+            # Convert to USD
+            fee = cls._extract_fee(raw)
+            exchange_rate = cls._get_usd_rate(raw, currency)
+            amount_usd = currency_service.convert_sync(amount, currency, exchange_rate)
+            fee_usd = currency_service.convert_sync(fee, currency, exchange_rate) if fee else None
+
             normalized = {
                 "source": "vima",
                 "source_id": raw.get("operation_id", ""),
@@ -97,7 +105,10 @@ class VimaNormalizer:
                 "merchant_id": raw.get("credentials_owner"),
                 "amount": amount,
                 "currency": currency,
-                "fee": cls._extract_fee(raw),
+                "amount_usd": amount_usd,
+                "fee": fee,
+                "fee_usd": fee_usd,
+                "exchange_rate": Decimal(str(exchange_rate)) if exchange_rate else None,
                 "status": status,
                 "original_status": original_status,
                 "user_id": raw.get("user_id") or payer.get("customer_account", {}).get("id"),
@@ -152,6 +163,36 @@ class VimaNormalizer:
             if fee is not None:
                 return Decimal(str(fee))
         return None
+
+    @classmethod
+    def _get_usd_rate(cls, raw: Dict[str, Any], currency: str) -> Optional[float]:
+        """
+        Get USD exchange rate from Vima transaction data.
+        
+        Vima provides rates in format like {"EUR-USD": 1.08, "INR-USD": 0.012}
+        """
+        currency = currency.upper()
+        
+        if currency == "USD":
+            return 1.0
+        
+        # Try to get rate from Vima API response
+        rates = raw.get("rates", {})
+        rate_key = f"{currency}-USD"
+        
+        if rates and rate_key in rates:
+            return float(rates[rate_key])
+        
+        # Fallback to card_finish if available
+        card_finish = raw.get("card_finish", [])
+        if card_finish and isinstance(card_finish, list):
+            for finish in card_finish:
+                finish_rates = finish.get("rates", {})
+                if rate_key in finish_rates:
+                    return float(finish_rates[rate_key])
+        
+        # Final fallback to static rates
+        return currency_service.STATIC_RATES_TO_USD.get(currency)
 
     @classmethod
     def _calculate_hash(cls, normalized: Dict[str, Any]) -> str:

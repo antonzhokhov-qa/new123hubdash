@@ -19,6 +19,7 @@ import {
   Pie,
 } from "recharts";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useFilterStore } from "@/stores/filter-store";
 import { 
   useMetricsTrends, 
   useHourlyDistribution, 
@@ -408,6 +409,7 @@ interface PeriodComparisonContentProps {
 }
 
 export function PeriodComparisonContent({ params, height = 220 }: PeriodComparisonContentProps) {
+  const { displayCurrency } = useFilterStore();
   const comparisonType = params.period === "today" || params.period === "yesterday" ? "day" : "week";
   
   const { data, isLoading } = usePeriodComparison({
@@ -430,11 +432,20 @@ export function PeriodComparisonContent({ params, height = 220 }: PeriodComparis
     );
   }
 
+  // Use USD or INR based on selected currency
+  const volumeValue = displayCurrency === "USD" && comparison.current.total_amount_usd
+    ? formatCurrency(comparison.current.total_amount_usd, "USD")
+    : formatCurrency(comparison.current.total_amount, "INR");
+    
+  const avgTicketValue = displayCurrency === "USD" && comparison.current.avg_ticket_usd
+    ? formatCurrency(comparison.current.avg_ticket_usd, "USD")
+    : formatCurrency(comparison.current.avg_ticket, "INR");
+
   const metrics = [
-    { label: "Volume", current: formatCurrency(comparison.current.total_amount, "INR"), change: comparison.comparison.amount_change_percent },
+    { label: "Volume", current: volumeValue, change: comparison.comparison.amount_change_percent },
     { label: "Transactions", current: formatNumber(comparison.current.total_count), change: comparison.comparison.count_change_percent },
     { label: "Conversion", current: `${comparison.current.conversion_rate.toFixed(1)}%`, change: comparison.comparison.conversion_change },
-    { label: "Avg Ticket", current: formatCurrency(comparison.current.avg_ticket, "INR"), change: comparison.comparison.avg_ticket_change_percent },
+    { label: "Avg Ticket", current: avgTicketValue, change: comparison.comparison.avg_ticket_change_percent },
   ];
 
   return (

@@ -12,6 +12,7 @@ class StatusMetrics(BaseModel):
 
     count: int
     amount: Decimal
+    amount_usd: Optional[Decimal] = None  # Amount in USD
 
 
 class MetricsOverview(BaseModel):
@@ -20,7 +21,9 @@ class MetricsOverview(BaseModel):
     period: Dict[str, str]  # from, to
     total_count: int
     total_amount: Decimal
+    total_amount_usd: Optional[Decimal] = None  # Total in USD
     currency: str = "INR"
+    display_currency: str = "USD"  # For frontend display
     
     by_status: Dict[str, StatusMetrics]
     # success, failed, pending
@@ -30,6 +33,7 @@ class MetricsOverview(BaseModel):
     
     conversion_rate: float  # success / total * 100
     avg_ticket: Decimal
+    avg_ticket_usd: Optional[Decimal] = None  # Avg ticket in USD
     
     # Comparison with previous period
     count_change_percent: Optional[float] = None
@@ -42,10 +46,13 @@ class ProjectMetrics(BaseModel):
     project: str
     total_count: int
     total_amount: Decimal
+    total_amount_usd: Optional[Decimal] = None
     success_count: int
     success_amount: Decimal
+    success_amount_usd: Optional[Decimal] = None
     failed_count: int
     failed_amount: Decimal
+    failed_amount_usd: Optional[Decimal] = None
     conversion_rate: float
 
 
@@ -69,6 +76,7 @@ class TrendPoint(BaseModel):
     timestamp: datetime
     count: int
     amount: Decimal
+    amount_usd: Optional[Decimal] = None  # Amount in USD
     success_count: int
     failed_count: int
     pending_count: int = 0

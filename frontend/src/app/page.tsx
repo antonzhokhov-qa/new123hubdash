@@ -6,6 +6,7 @@ import { useTransactions } from "@/hooks/use-transactions";
 import { KPICard } from "@/components/dashboard/kpi-card";
 import { PeriodSelector } from "@/components/dashboard/period-selector";
 import { SourceTabs } from "@/components/dashboard/source-tabs";
+import { CurrencyToggle } from "@/components/dashboard/currency-toggle";
 import { StatusBadge } from "@/components/dashboard/status-badge";
 import { SourceBadge } from "@/components/dashboard/source-badge";
 import { ChartRow, ChartRowItem } from "@/components/dashboard/chart-row";
@@ -35,7 +36,7 @@ import {
 import Link from "next/link";
 
 export default function DashboardPage() {
-  const { getDateParams, source } = useFilterStore();
+  const { getDateParams, source, displayCurrency } = useFilterStore();
   const dateParams = getDateParams();
   
   const paramsWithSource = {
@@ -52,6 +53,14 @@ export default function DashboardPage() {
   });
 
   const metrics = metricsData?.data;
+  
+  // Helper to get amount based on selected currency
+  const getAmount = (inr: number, usd?: number) => {
+    if (displayCurrency === "USD" && usd !== undefined) {
+      return formatCurrency(usd, "USD");
+    }
+    return formatCurrency(inr, "INR");
+  };
 
   return (
     <div className="space-y-6">
@@ -64,6 +73,7 @@ export default function DashboardPage() {
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
           <SourceTabs />
           <PeriodSelector />
+          <CurrencyToggle />
         </div>
       </div>
 
@@ -71,7 +81,7 @@ export default function DashboardPage() {
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <KPICard
           label="Total Volume"
-          value={metrics ? formatCurrency(metrics.total.amount, metrics.total.currency) : 0}
+          value={metrics ? getAmount(metrics.total.amount, metrics.total.amount_usd) : 0}
           subtext={metrics ? `${formatNumber(metrics.total.count)} transactions` : undefined}
           trend={metrics?.trends.total_change}
           icon={Wallet}
@@ -79,7 +89,7 @@ export default function DashboardPage() {
         />
         <KPICard
           label="Successful"
-          value={metrics ? formatCurrency(metrics.by_status.success.amount, "INR") : 0}
+          value={metrics ? getAmount(metrics.by_status.success.amount, metrics.by_status.success.amount_usd) : 0}
           subtext={metrics ? `${formatNumber(metrics.by_status.success.count)} transactions` : undefined}
           trend={metrics?.trends.success_change}
           icon={CheckCircle}
@@ -88,7 +98,7 @@ export default function DashboardPage() {
         />
         <KPICard
           label="Failed"
-          value={metrics ? formatCurrency(metrics.by_status.failed.amount, "INR") : 0}
+          value={metrics ? getAmount(metrics.by_status.failed.amount, metrics.by_status.failed.amount_usd) : 0}
           subtext={metrics ? `${formatNumber(metrics.by_status.failed.count)} transactions` : undefined}
           trend={metrics?.trends.failed_change}
           icon={XCircle}
@@ -98,7 +108,7 @@ export default function DashboardPage() {
         <KPICard
           label="Conversion Rate"
           value={metrics ? `${metrics.conversion_rate.toFixed(1)}%` : "0%"}
-          subtext={metrics ? `Avg ticket: ${formatCurrency(metrics.avg_ticket, "INR")}` : undefined}
+          subtext={metrics ? `Avg ticket: ${getAmount(metrics.avg_ticket, metrics.avg_ticket_usd)}` : undefined}
           icon={Percent}
           color="default"
           isLoading={metricsLoading}

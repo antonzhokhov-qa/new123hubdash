@@ -19,6 +19,10 @@ class TransactionBase(BaseModel):
     project: Optional[str] = None
     amount: Decimal
     currency: str = "INR"
+    amount_usd: Optional[Decimal] = None  # Amount in USD
+    fee: Optional[Decimal] = None
+    fee_usd: Optional[Decimal] = None  # Fee in USD
+    exchange_rate: Optional[Decimal] = None  # Exchange rate used
     status: str
     original_status: Optional[str] = None
     user_id: Optional[str] = None

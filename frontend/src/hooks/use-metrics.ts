@@ -31,12 +31,14 @@ function transformMetricsOverview(backend: any): MetricsOverview {
     total: {
       count: backend.total_count,
       amount: backend.total_amount,
+      amount_usd: backend.total_amount_usd,
       currency: backend.currency || "INR",
     },
     by_status: backend.by_status,
     by_source: backend.by_source,
     conversion_rate: backend.conversion_rate,
     avg_ticket: backend.avg_ticket,
+    avg_ticket_usd: backend.avg_ticket_usd,
     trends: {
       total_change: backend.count_change_percent || 0,
       success_change: 0,

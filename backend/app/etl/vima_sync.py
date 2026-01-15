@@ -209,7 +209,7 @@ class VimaSyncService:
         # Build insert statement with ON CONFLICT
         stmt = insert(Transaction).values(transactions)
         
-        # On conflict (data_hash), update status and timestamps
+        # On conflict (data_hash), update status, timestamps, and USD amounts
         stmt = stmt.on_conflict_do_update(
             index_elements=["data_hash"],
             set_={
@@ -218,6 +218,9 @@ class VimaSyncService:
                 "updated_at": stmt.excluded.updated_at,
                 "completed_at": stmt.excluded.completed_at,
                 "source_update_cursor": stmt.excluded.source_update_cursor,
+                "amount_usd": stmt.excluded.amount_usd,
+                "fee_usd": stmt.excluded.fee_usd,
+                "exchange_rate": stmt.excluded.exchange_rate,
                 "raw_data": stmt.excluded.raw_data,
             },
         )

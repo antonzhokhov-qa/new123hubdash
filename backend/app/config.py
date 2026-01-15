@@ -47,6 +47,11 @@ class Settings(BaseSettings):
     cache_ttl_transactions: int = 5  # 5 seconds
     cache_ttl_sync_status: int = 3  # 3 seconds
 
+    # Currency conversion
+    exchange_rate_api_key: str = ""  # Optional, for premium API
+    default_display_currency: str = "USD"
+    currency_rate_refresh_seconds: int = 1800  # 30 minutes
+
     class Config:
         env_file = ".env"
         env_file_encoding = "utf-8"

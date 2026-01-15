@@ -48,6 +48,11 @@ class Transaction(Base):
     amount = Column(Numeric(18, 4), nullable=False)
     currency = Column(String(3), nullable=False, default="INR")
     fee = Column(Numeric(18, 4))
+    
+    # USD conversion
+    amount_usd = Column(Numeric(18, 4))  # Amount in USD
+    fee_usd = Column(Numeric(18, 4))  # Fee in USD
+    exchange_rate = Column(Numeric(12, 8))  # Rate used for conversion
 
     # Status
     status = Column(String(30), nullable=False, index=True)  # success | failed | pending

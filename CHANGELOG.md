@@ -87,6 +87,15 @@ All notable changes to PSP Dashboard project.
 - **Initial sync**: При пустой БД автоматически загружается 7 дней истории из обоих источников
 - **Ручной триггер**: `trigger_historical_sync(days=N)` для принудительной загрузки
 
+#### Currency Conversion to USD
+- **CurrencyService**: Сервис конвертации валют с Live API (exchangerate-api.com)
+- **Redis кеширование**: Курсы кешируются на 1 час, обновляются каждые 30 минут
+- **Fallback rates**: Статические курсы при недоступности API
+- **Новые поля**: `amount_usd`, `fee_usd`, `exchange_rate` в модели Transaction
+- **Метрики в USD**: Все метрики теперь возвращают суммы в USD (`total_amount_usd`, `avg_ticket_usd`)
+- **Экспорт**: CSV/Excel экспорт включает колонки Amount USD, Fee USD, Exchange Rate
+- **Поддержка валют**: INR, EUR, USD, GBP, RUB, AED, BRL, CAD, AUD, JPY, CNY, KRW
+
 ### Changed
 - `TrendPoint` расширен: добавлены `pending_count` и `conversion_rate`
 - Убран Playwright из зависимостей (не требуется для PayShack API)

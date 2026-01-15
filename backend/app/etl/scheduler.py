@@ -52,13 +52,27 @@ async def start_scheduler():
         max_instances=1,
     )
     
+    # Add currency rates refresh job - every 30 minutes
+    _scheduler.add_job(
+        refresh_currency_rates,
+        trigger=IntervalTrigger(seconds=settings.currency_rate_refresh_seconds),
+        id="currency_rates_refresh",
+        name="Currency Rates Refresh",
+        replace_existing=True,
+        max_instances=1,
+    )
+    
     _scheduler.start()
     logger.info(
         "scheduler_started",
         vima_interval=settings.vima_sync_interval_seconds,
         payshack_interval=settings.payshack_sync_interval_seconds,
         payshack_metadata_interval=settings.payshack_metadata_sync_interval_seconds,
+        currency_refresh_interval=settings.currency_rate_refresh_seconds,
     )
+    
+    # Pre-load currency rates at startup
+    asyncio.create_task(refresh_currency_rates())
     
     # Run initial sync after short delay
     asyncio.create_task(initial_sync())
@@ -276,3 +290,32 @@ async def trigger_historical_sync(days: int = None):
         "vima": results[0],
         "payshack": results[1],
     }
+
+
+async def refresh_currency_rates():
+    """
+    Refresh currency exchange rates from external API.
+    
+    Called periodically by scheduler (default: every 30 minutes).
+    """
+    from app.services.currency import currency_service
+    
+    logger.info("currency_rates_refresh_started")
+    
+    try:
+        success = await currency_service.refresh_rates()
+        
+        if success:
+            # Get current rates for logging
+            rates = await currency_service.get_rates()
+            logger.info(
+                "currency_rates_refresh_completed",
+                inr_usd=rates.get("INR"),
+                eur_usd=rates.get("EUR"),
+                currencies_count=len(rates),
+            )
+        else:
+            logger.warning("currency_rates_refresh_failed_using_cache")
+            
+    except Exception as e:
+        logger.error("currency_rates_refresh_error", error=str(e))

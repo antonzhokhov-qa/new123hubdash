@@ -8,6 +8,8 @@ interface DateRange {
   to: Date;
 }
 
+export type DisplayCurrency = "USD" | "INR";
+
 interface FilterStore {
   // Period
   dateRangePreset: DateRangePreset;
@@ -20,6 +22,10 @@ interface FilterStore {
   project: string | null;
   status: string | null;
   search: string;
+  
+  // Currency display
+  displayCurrency: DisplayCurrency;
+  setDisplayCurrency: (currency: DisplayCurrency) => void;
   
   setSource: (source: string | null) => void;
   setProject: (project: string | null) => void;
@@ -59,6 +65,8 @@ export const useFilterStore = create<FilterStore>((set, get) => ({
   status: null,
   search: "",
   
+  displayCurrency: "USD",
+  
   setDateRangePreset: (preset) => {
     const dateRange = getDateRangeFromPreset(preset);
     set({ dateRangePreset: preset, dateRange });
@@ -72,6 +80,7 @@ export const useFilterStore = create<FilterStore>((set, get) => ({
   setProject: (project) => set({ project }),
   setStatus: (status) => set({ status }),
   setSearch: (search) => set({ search }),
+  setDisplayCurrency: (currency) => set({ displayCurrency: currency }),
   
   resetFilters: () => set({
     source: null,
