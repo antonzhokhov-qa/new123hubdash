@@ -88,6 +88,7 @@ export interface SyncStatus {
   error_message: string | null;
   next_sync_in_seconds: number | null;
   next_sync_at?: string | null;
+  last_cursor?: string | null;
 }
 
 export interface ReconciliationSummary {
