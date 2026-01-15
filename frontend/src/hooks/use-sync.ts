@@ -10,7 +10,7 @@ export function useSyncStatus() {
     queryFn: async () => {
       if (USE_MOCK) {
         await new Promise((r) => setTimeout(r, 300));
-        return { data: mockSyncStatus };
+        return { data: { sources: mockSyncStatus } };
       }
       return api.getSyncStatus();
     },

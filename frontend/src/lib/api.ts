@@ -343,8 +343,9 @@ class ApiClient {
   }
 
   // Sync
-  async getSyncStatus(): Promise<{ sources: SyncStatus[] }> {
-    return this.request<{ sources: SyncStatus[] }>("/sync/status");
+  async getSyncStatus(): Promise<{ data: { sources: SyncStatus[] } }> {
+    const result = await this.request<{ sources: SyncStatus[] }>("/sync/status");
+    return { data: result };
   }
 
   async triggerSync(source: Source): Promise<{ message: string }> {
