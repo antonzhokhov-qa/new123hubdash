@@ -184,6 +184,12 @@ export interface PeriodComparisonResponse {
 
 export interface AmountDistribution {
   buckets: AmountBucketPoint[];
+  data?: Array<{
+    bucket_index: number;
+    hour: number;
+    count: number;
+    amount?: number;
+  }>;
 }
 
 export interface AmountBucketPoint {
