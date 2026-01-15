@@ -1,0 +1,68 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    container_name: psp_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-psp_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-psp_password}
+      POSTGRES_DB: ${POSTGRES_DB:-psp_dashboard}
+    ports:
+      - "${POSTGRES_PORT:-5433}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-psp_user} -d ${POSTGRES_DB:-psp_dashboard}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Redis Cache
+  redis:
+    image: redis:7-alpine
+    container_name: psp_redis
+    restart: unless-stopped
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Backend API (optional - for production)
+  # backend:
+  #   build:
+  #     context: ./backend
+  #     dockerfile: Dockerfile
+  #   container_name: psp_backend
+  #   restart: unless-stopped
+  #   environment:
+  #     DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-psp_user}:${POSTGRES_PASSWORD:-psp_password}@postgres:5432/${POSTGRES_DB:-psp_dashboard}
+  #     REDIS_URL: redis://redis:6379/0
+  #     VIMA_API_KEY: ${VIMA_API_KEY}
+  #     PAYSHACK_EMAIL: ${PAYSHACK_EMAIL}
+  #     PAYSHACK_PASSWORD: ${PAYSHACK_PASSWORD}
+  #   ports:
+  #     - "${BACKEND_PORT:-8000}:8000"
+  #   depends_on:
+  #     postgres:
+  #       condition: service_healthy
+  #     redis:
+  #       condition: service_healthy
+
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+
+networks:
+  default:
+    name: psp_network
