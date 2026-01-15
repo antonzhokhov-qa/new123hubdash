@@ -142,11 +142,21 @@ export interface AmountBucketPoint {
 export interface MerchantMetrics {
   merchant_id: string;
   merchant_name: string;
+  project: string;
   transactions: number;
   volume: number;
   volume_usd: number;
   success_rate: number;
   projects: string[];
+  // Extended fields for merchants page
+  total_count: number;
+  total_amount: number;
+  avg_ticket: number;
+  success_count: number;
+  failed_count: number;
+  pending_count: number;
+  conversion_rate: number;
+  last_txn_at: string | null;
 }
 
 export interface TransactionsResponse {
