@@ -312,7 +312,7 @@ export default function MerchantsPage() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {merchants.map((m) => (
+                  {merchants.map((m: MerchantMetrics) => (
                     <TableRow
                       key={m.merchant_id}
                       className="cursor-pointer hover:bg-background-secondary"
