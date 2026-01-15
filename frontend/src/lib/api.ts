@@ -182,14 +182,16 @@ export interface PeriodComparisonResponse {
   };
 }
 
+export interface AmountHeatmapPoint {
+  bucket_index: number;
+  hour: number;
+  count: number;
+  amount?: number;
+}
+
 export interface AmountDistribution {
   buckets: AmountBucketPoint[];
-  data: Array<{
-    bucket_index: number;
-    hour: number;
-    count: number;
-    amount?: number;
-  }>;
+  data: AmountHeatmapPoint[];
 }
 
 export interface AmountBucketPoint {

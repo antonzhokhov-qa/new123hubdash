@@ -2,7 +2,7 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { AmountDistribution, AmountBucketPoint } from "@/lib/api";
+import { AmountDistribution, AmountBucketPoint, AmountHeatmapPoint } from "@/lib/api";
 import { cn, formatNumber } from "@/lib/utils";
 
 interface AmountHeatmapProps {
@@ -66,7 +66,7 @@ export function AmountHeatmap({
   }
 
   // Create lookup map and find max
-  const dataMap = new Map<string, AmountBucketPoint>();
+  const dataMap = new Map<string, AmountHeatmapPoint>();
   let maxCount = 0;
   
   data.data.forEach((point) => {
