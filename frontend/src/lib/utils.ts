@@ -49,7 +49,7 @@ export function formatNumber(
   }).format(value);
 }
 
-export function truncateId(id: string, length: number = 8): string {
+export function truncateId(id: string | undefined | null, length: number = 8): string {
   if (!id) return "-";
   if (id.length <= length) return id;
   return `${id.slice(0, length)}...`;
