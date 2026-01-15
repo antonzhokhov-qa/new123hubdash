@@ -128,9 +128,10 @@ export interface Discrepancy {
   type: "missing_vima" | "missing_payshack" | "amount_mismatch" | "status_mismatch";
   discrepancy_type?: string;
   match_status?: string;
-  vima_amount?: number;
-  payshack_amount?: number;
+  vima_amount?: number | null;
+  payshack_amount?: number | null;
   difference?: number;
+  amount_diff?: number | null;
   created_at: string;
   client_operation_id?: string;
   vima_status?: string;
