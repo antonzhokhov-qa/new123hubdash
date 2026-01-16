@@ -234,14 +234,23 @@ class PayShackClient:
             
             data = response.json()
             
-            if not data.get("success"):
+            # PayShack API may return success in different ways
+            is_success = (
+                data.get("success") is True or
+                data.get("success") == "true" or
+                data.get("statusCode") == 200 or
+                data.get("status") == "OK" or
+                "data" in data
+            )
+            
+            if not is_success and data.get("statusCode") not in (200, None):
                 raise PayShackAPIError(
                     f"Fetch pay-in failed: {data.get('message', 'Unknown error')}",
                     response=data,
                 )
             
-            result = data.get("data", {})
-            transactions = result.get("transactions", [])
+            result = data.get("data", data)
+            transactions = result.get("transactions", result.get("items", []))
             
             logger.info(
                 "payshack_payin_response",
@@ -337,14 +346,27 @@ class PayShackClient:
             
             data = response.json()
             
-            if not data.get("success"):
+            # PayShack payout API may return success in different ways:
+            # - {"success": true, "data": {...}}
+            # - {"statusCode": 200, "data": {...}}
+            # - Direct data without wrapper
+            is_success = (
+                data.get("success") is True or
+                data.get("success") == "true" or
+                data.get("statusCode") == 200 or
+                data.get("status") == "OK" or
+                "data" in data  # If data exists, consider it success
+            )
+            
+            if not is_success and data.get("statusCode") not in (200, None):
                 raise PayShackAPIError(
                     f"Fetch payout failed: {data.get('message', 'Unknown error')}",
                     response=data,
                 )
             
-            result = data.get("data", {})
-            transactions = result.get("transactions", [])
+            # Handle different response structures
+            result = data.get("data", data)  # Fallback to data itself if no wrapper
+            transactions = result.get("transactions", result.get("items", []))
             
             logger.info(
                 "payshack_payout_response",

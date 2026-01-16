@@ -442,32 +442,278 @@ class PayShackSyncService:
             state = SyncState(source=self.source, **kwargs)
             session.add(state)
 
+    async def backfill(
+        self,
+        date_from: datetime,
+        date_to: datetime,
+        window_days: int = 1,
+        max_pages_per_window: int = 500,
+    ) -> Dict[str, Any]:
+        """
+        Backfill historical data using date windows.
+        
+        Iterates through date range in windows, fetching all pages
+        for each window. Provides detailed progress logging.
+        
+        Args:
+            date_from: Start date for backfill
+            date_to: End date for backfill
+            window_days: Size of each date window (default 1 day)
+            max_pages_per_window: Max pages to fetch per window
+            
+        Returns:
+            Dict with backfill statistics
+        """
+        start_time = time.time()
+        
+        stats = {
+            "windows_processed": 0,
+            "total_records": 0,
+            "total_inserted": 0,
+            "total_updated": 0,
+            "errors": [],
+            "date_from": date_from.isoformat(),
+            "date_to": date_to.isoformat(),
+        }
+        
+        logger.info(
+            "payshack_backfill_starting",
+            date_from=date_from.isoformat(),
+            date_to=date_to.isoformat(),
+            window_days=window_days,
+        )
+        
+        current_start = date_from
+        
+        async with async_session_maker() as session:
+            try:
+                await self._update_sync_state(
+                    session,
+                    sync_status="running",
+                    error_message=None,
+                )
+                await session.commit()
+                
+                await broadcast_sync_started(self.source)
+                
+                while current_start < date_to:
+                    current_end = min(
+                        current_start + timedelta(days=window_days),
+                        date_to
+                    )
+                    
+                    window_stats = await self._backfill_window(
+                        session,
+                        date_from=current_start,
+                        date_to=current_end,
+                        max_pages=max_pages_per_window,
+                    )
+                    
+                    stats["windows_processed"] += 1
+                    stats["total_records"] += window_stats.get("records", 0)
+                    stats["total_inserted"] += window_stats.get("inserted", 0)
+                    stats["total_updated"] += window_stats.get("updated", 0)
+                    
+                    if window_stats.get("error"):
+                        stats["errors"].append({
+                            "window": f"{current_start.date()} - {current_end.date()}",
+                            "error": window_stats["error"],
+                        })
+                    
+                    logger.info(
+                        "payshack_backfill_window_complete",
+                        window_start=current_start.date().isoformat(),
+                        window_end=current_end.date().isoformat(),
+                        records=window_stats.get("records", 0),
+                        pages=window_stats.get("pages", 0),
+                        total_so_far=stats["total_records"],
+                    )
+                    
+                    await broadcast_sync_progress(
+                        self.source,
+                        stats["windows_processed"],
+                        int((date_to - date_from).days / window_days) + 1,
+                    )
+                    
+                    current_start = current_end
+                    
+                    await session.commit()
+                
+                # Mark sync as successful
+                duration_ms = int((time.time() - start_time) * 1000)
+                await self._update_sync_state(
+                    session,
+                    sync_status="idle",
+                    last_sync_at=datetime.now(timezone.utc),
+                    last_successful_sync=datetime.now(timezone.utc),
+                    records_synced=stats["total_records"],
+                )
+                await session.commit()
+                
+                await broadcast_sync_completed(self.source, stats["total_records"])
+                
+                stats["duration_ms"] = duration_ms
+                stats["status"] = "success"
+                
+                logger.info(
+                    "payshack_backfill_completed",
+                    **stats,
+                )
+                
+                return stats
+                
+            except Exception as e:
+                logger.error("payshack_backfill_failed", error=str(e))
+                
+                await self._update_sync_state(
+                    session,
+                    sync_status="failed",
+                    error_message=str(e)[:500],
+                )
+                await session.commit()
+                
+                stats["status"] = "failed"
+                stats["error"] = str(e)
+                return stats
+
+    async def _backfill_window(
+        self,
+        session,
+        date_from: datetime,
+        date_to: datetime,
+        max_pages: int = 500,
+    ) -> Dict[str, Any]:
+        """
+        Backfill a single date window.
+        
+        Returns:
+            Stats for this window
+        """
+        stats = {
+            "records": 0,
+            "inserted": 0,
+            "updated": 0,
+            "pages": 0,
+            "error": None,
+        }
+        
+        date_from_str = date_from.strftime("%Y-%m-%d")
+        date_to_str = date_to.strftime("%Y-%m-%d")
+        
+        try:
+            # Fetch Pay-In transactions for this window
+            page = 1
+            while page <= max_pages:
+                result = await self.client.get_payin_transactions(
+                    page=page,
+                    limit=100,
+                    date_from=date_from_str,
+                    date_to=date_to_str,
+                )
+                
+                transactions = result.get("transactions", result.get("items", []))
+                if not transactions:
+                    break
+                
+                # Normalize and insert
+                for raw_txn in transactions:
+                    try:
+                        normalized = PayShackNormalizer.normalize_payin(raw_txn)
+                        upsert_result = await self._upsert_transactions(session, [normalized])
+                        stats["records"] += 1
+                        stats["inserted"] += upsert_result.get("inserted", 0)
+                        stats["updated"] += upsert_result.get("updated", 0)
+                    except Exception as e:
+                        logger.warning(
+                            "payshack_backfill_normalize_error",
+                            txn_id=raw_txn.get("txnId"),
+                            error=str(e),
+                        )
+                
+                stats["pages"] += 1
+                
+                # Check if more pages
+                total_pages = result.get("totalPages", 1)
+                if page >= total_pages:
+                    break
+                
+                page += 1
+            
+            # Also fetch Pay-Out transactions
+            page = 1
+            while page <= max_pages:
+                result = await self.client.get_payout_transactions(
+                    page=page,
+                    limit=100,
+                    date_from=date_from_str,
+                    date_to=date_to_str,
+                )
+                
+                transactions = result.get("transactions", result.get("items", []))
+                if not transactions:
+                    break
+                
+                for raw_txn in transactions:
+                    try:
+                        normalized = PayShackNormalizer.normalize_payout(raw_txn)
+                        upsert_result = await self._upsert_transactions(session, [normalized])
+                        stats["records"] += 1
+                        stats["inserted"] += upsert_result.get("inserted", 0)
+                        stats["updated"] += upsert_result.get("updated", 0)
+                    except Exception as e:
+                        logger.warning(
+                            "payshack_backfill_payout_error",
+                            txn_id=raw_txn.get("txnId"),
+                            error=str(e),
+                        )
+                
+                stats["pages"] += 1
+                
+                total_pages = result.get("totalPages", 1)
+                if page >= total_pages:
+                    break
+                
+                page += 1
+                
+        except Exception as e:
+            stats["error"] = str(e)
+            logger.error(
+                "payshack_backfill_window_error",
+                date_from=date_from_str,
+                date_to=date_to_str,
+                error=str(e),
+            )
+        
+        return stats
+
     async def historical_sync(self, days: int = 7) -> Dict[str, Any]:
         """
         Load historical data for specified number of days.
         
-        Fetches ALL PayShack transactions without date filter
-        (full_sync=True) to ensure complete data.
+        Uses backfill with 1-day windows for controlled loading.
         
         Args:
-            days: Number of days of history (used for date_from filter)
+            days: Number of days of history to load
             
         Returns:
             Dict with sync results
         """
         logger.info("payshack_historical_sync_starting", days=days)
         
-        # Calculate date range
         date_to = datetime.now(timezone.utc)
         date_from = date_to - timedelta(days=days)
         
-        # Use sync with full_sync=True to load all data
-        result = await self.sync(full_sync=True)
+        # Use backfill with day windows
+        result = await self.backfill(
+            date_from=date_from,
+            date_to=date_to,
+            window_days=1,
+        )
         
         logger.info(
             "payshack_historical_sync_completed",
             days=days,
-            records=result.get("records_synced", 0),
+            records=result.get("total_records", 0),
         )
         
         return result

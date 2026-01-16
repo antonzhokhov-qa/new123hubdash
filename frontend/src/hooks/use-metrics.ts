@@ -3,15 +3,14 @@ import {
   api, 
   MetricsOverview, 
   MetricsByProject, 
-  MetricsTrends, 
-  HourlyDistribution, 
+  MetricsTrend,
+  HourlyDistributionPoint, 
   AmountDistribution, 
-  ConversionByProjectResponse,
+  ConversionByProject,
   HeatmapResponse,
   PeriodComparisonResponse,
-  MetricsByCountry,
-  MerchantListResponse,
-  MetricsBySource,
+  CountryMetrics,
+  MerchantMetrics,
 } from "@/lib/api";
 import { mockMetricsOverview, mockMetricsByProject, mockMetricsTrends } from "@/lib/mock-data";
 
@@ -233,7 +232,7 @@ export function useMerchants(params: MerchantParams) {
   return useQuery({
     queryKey: ["metrics", "merchants", params],
     queryFn: async () => {
-      const response = await api.getMerchants(params);
+      const response = await api.getMerchantsList(params);
       return { data: response };
     },
     staleTime: 60_000,

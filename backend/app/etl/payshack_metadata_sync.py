@@ -12,7 +12,7 @@ from sqlalchemy import select
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.db.session import async_session_factory
+from app.db.session import async_session_maker
 from app.db.redis import cache
 from app.integrations.payshack import PayShackClient, payshack_client
 from app.models.payshack_metadata import (
@@ -53,7 +53,7 @@ async def sync_payshack_clients(client: Optional[PayShackClient] = None) -> dict
             logger.warning("payshack_clients_sync_empty")
             return stats
         
-        async with async_session_factory() as db:
+        async with async_session_maker() as db:
             for client_data in clients_data:
                 try:
                     client_id = (
@@ -151,7 +151,7 @@ async def sync_payshack_resellers(client: Optional[PayShackClient] = None) -> di
             logger.warning("payshack_resellers_sync_empty")
             return stats
         
-        async with async_session_factory() as db:
+        async with async_session_maker() as db:
             for reseller_data in resellers_data:
                 try:
                     reseller_id = (
@@ -231,7 +231,7 @@ async def sync_payshack_service_providers(client: Optional[PayShackClient] = Non
             logger.warning("payshack_providers_sync_empty")
             return stats
         
-        async with async_session_factory() as db:
+        async with async_session_maker() as db:
             for provider_data in providers_data:
                 try:
                     provider_id = (
@@ -295,7 +295,7 @@ async def create_balance_snapshots() -> dict:
     stats = {"created": 0, "errors": 0}
     now = datetime.now(timezone.utc)
     
-    async with async_session_factory() as db:
+    async with async_session_maker() as db:
         try:
             # Snapshot client balances
             result = await db.execute(select(PayShackClientModel))

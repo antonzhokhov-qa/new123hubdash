@@ -63,7 +63,7 @@ class Transaction(Base):
     user_email = Column(String(255))
     user_phone = Column(String(50))
     user_name = Column(String(255))
-    country = Column(String(2))
+    country = Column(String(10))  # Increased from 2 to handle longer country codes
 
     # UTR (PayShack specific)
     utr = Column(String(100))

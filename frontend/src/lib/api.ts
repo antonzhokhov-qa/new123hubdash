@@ -398,6 +398,185 @@ class ApiClient {
     );
   }
 
+  // === Missing Chart Methods ===
+
+  async getHourlyDistribution(params?: {
+    source?: Source;
+    start_date?: string;
+    end_date?: string;
+    project_id?: string;
+  }): Promise<HourlyDistributionPoint[]> {
+    const searchParams = new URLSearchParams();
+    if (params) {
+      Object.entries(params).forEach(([key, value]) => {
+        if (value !== undefined && value !== null && value !== "all") {
+          searchParams.append(key, String(value));
+        }
+      });
+    }
+    const query = searchParams.toString();
+    // Backend returns data under "data" key
+    const result = await this.request<{ data: HourlyDistributionPoint[] }>(
+      `/metrics/hourly${query ? `?${query}` : ""}`
+    );
+    return result.data || [];
+  }
+
+  async getAmountDistribution(params?: {
+    source?: Source;
+    start_date?: string;
+    end_date?: string;
+    project_id?: string;
+  }): Promise<AmountDistribution> {
+    const searchParams = new URLSearchParams();
+    if (params) {
+      Object.entries(params).forEach(([key, value]) => {
+        if (value !== undefined && value !== null && value !== "all") {
+          searchParams.append(key, String(value));
+        }
+      });
+    }
+    const query = searchParams.toString();
+    const result = await this.request<{ buckets: AmountBucketPoint[]; data: AmountHeatmapPoint[] }>(
+      `/metrics/amount-distribution${query ? `?${query}` : ""}`
+    );
+    // Transform total_amount to amount if needed
+    return {
+      buckets: result.buckets || [],
+      data: result.data || [],
+    };
+  }
+
+  async getHeatmap(params?: {
+    source?: Source;
+    start_date?: string;
+    end_date?: string;
+    project_id?: string;
+    type?: "hour_day" | "merchant_hour" | "merchant_day";
+  }): Promise<HeatmapResponse> {
+    const searchParams = new URLSearchParams();
+    if (params) {
+      Object.entries(params).forEach(([key, value]) => {
+        if (value !== undefined && value !== null && value !== "all") {
+          searchParams.append(key, String(value));
+        }
+      });
+    }
+    const query = searchParams.toString();
+    return this.request<HeatmapResponse>(
+      `/metrics/heatmap${query ? `?${query}` : ""}`
+    );
+  }
+
+  async getConversionByProject(params?: {
+    source?: Source;
+    start_date?: string;
+    end_date?: string;
+  }): Promise<ConversionByProject[]> {
+    const searchParams = new URLSearchParams();
+    if (params) {
+      Object.entries(params).forEach(([key, value]) => {
+        if (value !== undefined && value !== null && value !== "all") {
+          searchParams.append(key, String(value));
+        }
+      });
+    }
+    const query = searchParams.toString();
+    const result = await this.request<{ period: string; projects: ConversionByProject[] }>(
+      `/metrics/by-project${query ? `?${query}` : ""}`
+    );
+    return result.projects || [];
+  }
+
+  async getMetricsByCountry(params?: {
+    source?: Source;
+    start_date?: string;
+    end_date?: string;
+    project_id?: string;
+    limit?: number;
+  }): Promise<CountryMetrics[]> {
+    const searchParams = new URLSearchParams();
+    if (params) {
+      Object.entries(params).forEach(([key, value]) => {
+        if (value !== undefined && value !== null && value !== "all") {
+          searchParams.append(key, String(value));
+        }
+      });
+    }
+    const query = searchParams.toString();
+    const result = await this.request<{ countries: CountryMetrics[] }>(
+      `/metrics/by-country${query ? `?${query}` : ""}`
+    );
+    return result.countries || [];
+  }
+
+  async getMetricsBySource(params?: {
+    start_date?: string;
+    end_date?: string;
+    project_id?: string;
+    granularity?: "hour" | "day" | "week" | "month";
+  }): Promise<{ vima: MetricsTrend[]; payshack: MetricsTrend[] }> {
+    const searchParams = new URLSearchParams();
+    if (params) {
+      Object.entries(params).forEach(([key, value]) => {
+        if (value !== undefined && value !== null && value !== "all") {
+          searchParams.append(key, String(value));
+        }
+      });
+    }
+    const query = searchParams.toString();
+    const result = await this.request<{ sources: { vima: { trends: MetricsTrend[] }; payshack: { trends: MetricsTrend[] } } }>(
+      `/metrics/by-source${query ? `?${query}` : ""}`
+    );
+    return {
+      vima: result.sources?.vima?.trends || [],
+      payshack: result.sources?.payshack?.trends || [],
+    };
+  }
+
+  async getPeriodComparison(params?: {
+    source?: Source;
+    start_date?: string;
+    end_date?: string;
+    project_id?: string;
+    compare_period?: "previous" | "last_week" | "last_month";
+  }): Promise<PeriodComparisonResponse> {
+    const searchParams = new URLSearchParams();
+    if (params) {
+      Object.entries(params).forEach(([key, value]) => {
+        if (value !== undefined && value !== null && value !== "all") {
+          searchParams.append(key, String(value));
+        }
+      });
+    }
+    const query = searchParams.toString();
+    // IMPORTANT: Backend uses /metrics/comparison, NOT /metrics/period-comparison
+    return this.request<PeriodComparisonResponse>(
+      `/metrics/comparison${query ? `?${query}` : ""}`
+    );
+  }
+
+  async getMerchantsList(params?: {
+    source?: Source;
+    start_date?: string;
+    end_date?: string;
+    page?: number;
+    limit?: number;
+  }): Promise<{ merchants: MerchantMetrics[]; total: number }> {
+    const searchParams = new URLSearchParams();
+    if (params) {
+      Object.entries(params).forEach(([key, value]) => {
+        if (value !== undefined && value !== null && value !== "all") {
+          searchParams.append(key, String(value));
+        }
+      });
+    }
+    const query = searchParams.toString();
+    return this.request<{ merchants: MerchantMetrics[]; total: number }>(
+      `/metrics/by-merchant${query ? `?${query}` : ""}`
+    );
+  }
+
   // Sync
   async getSyncStatus(): Promise<{ data: { sources: SyncStatus[] } }> {
     const result = await this.request<{ sources: SyncStatus[] }>("/sync/status");
