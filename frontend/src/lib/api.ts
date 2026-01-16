@@ -82,6 +82,21 @@ export interface MetricsTrend {
   success_rate: number;
 }
 
+export interface MetricsTrends {
+  period: { from: string; to: string };
+  granularity: "minute" | "5min" | "15min" | "hour" | "day" | "week" | "month";
+  points: Array<{
+    timestamp: string;
+    count: number;
+    amount: number;
+    amount_usd?: number;
+    success_count: number;
+    failed_count: number;
+    pending_count?: number;
+    conversion_rate?: number;
+  }>;
+}
+
 export interface SyncStatus {
   source: Source;
   status: "running" | "stopped" | "error" | "idle";
@@ -229,23 +244,26 @@ export interface PeriodComparisonResponse {
 }
 
 export interface AmountHeatmapPoint {
+  bucket: string;
   bucket_index: number;
   hour: number;
   count: number;
+  total_amount?: number;
   amount?: number;
 }
 
 export interface AmountDistribution {
+  period?: { from: string; to: string };
   buckets: AmountBucketPoint[];
   data: AmountHeatmapPoint[];
 }
 
 export interface AmountBucketPoint {
   range: string;
-  min: number;
-  max: number;
-  count: number;
-  volume: number;
+  min?: number;
+  max?: number;
+  count?: number;
+  volume?: number;
 }
 
 export interface MerchantMetrics {
@@ -363,7 +381,7 @@ class ApiClient {
     source?: Source;
     start_date?: string;
     end_date?: string;
-  }): Promise<MetricsByProject[]> {
+  }): Promise<{ period: { from: string; to: string }; projects: MetricsByProject[] }> {
     const searchParams = new URLSearchParams();
     if (params) {
       Object.entries(params).forEach(([key, value]) => {
@@ -373,7 +391,7 @@ class ApiClient {
       });
     }
     const query = searchParams.toString();
-    return this.request<MetricsByProject[]>(
+    return this.request<{ period: { from: string; to: string }; projects: MetricsByProject[] }>(
       `/metrics/by-project${query ? `?${query}` : ""}`
     );
   }
@@ -437,13 +455,26 @@ class ApiClient {
       });
     }
     const query = searchParams.toString();
-    const result = await this.request<{ buckets: AmountBucketPoint[]; data: AmountHeatmapPoint[] }>(
-      `/metrics/amount-distribution${query ? `?${query}` : ""}`
-    );
-    // Transform total_amount to amount if needed
+    const result = await this.request<{
+      period?: { from: string; to: string };
+      buckets: string[];
+      data: Array<AmountHeatmapPoint & { total_amount?: number; amount?: number }>;
+    }>(`/metrics/amount-distribution${query ? `?${query}` : ""}`);
+
+    const buckets = (result.buckets || []).map((label) => ({
+      range: label,
+    }));
+
+    const data = (result.data || []).map((point) => ({
+      ...point,
+      amount: point.amount ?? point.total_amount,
+      total_amount: point.total_amount ?? point.amount,
+    }));
+
     return {
-      buckets: result.buckets || [],
-      data: result.data || [],
+      period: result.period,
+      buckets,
+      data,
     };
   }
 

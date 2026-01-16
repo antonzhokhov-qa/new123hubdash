@@ -3,6 +3,7 @@ import {
   api, 
   MetricsOverview, 
   MetricsByProject, 
+  MetricsTrends,
   MetricsTrend,
   HourlyDistributionPoint, 
   AmountDistribution, 

@@ -106,6 +106,11 @@ All notable changes to PSP Dashboard project.
 
 ### Fixed
 - Исправлена документация: PayShack API возвращает данные в открытом JSON (не зашифровано)
+- PayShack pay-in/pay-out: корректная обработка ответов с разными форматами `success/statusCode`
+- PayShack metadata sync: исправлен импорт `async_session_maker`
+- Transaction.country: увеличен размер поля до 10 символов (исправление truncation)
+- Frontend charts: добавлены недостающие методы API клиента и исправлен endpoint `/metrics/comparison`
+- Frontend charts: выровнены контракты `/metrics/by-project` и `/metrics/amount-distribution`
 
 ---
 

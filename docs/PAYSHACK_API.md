@@ -555,6 +555,17 @@ GET /indigate-payin-svc/api/v1/payin/transaction/fetch?transactionId={txn_id}
 4. Обновить last_sync_timestamp
 ```
 
+### Backfill (оконная загрузка)
+
+Для контролируемой догрузки истории используем оконный подход:
+
+```
+1. Разбить диапазон на окна (например, 1 день)
+2. Для каждого окна: GET /transaction/fetch?dateFrom={start}&dateTo={end}
+3. Обработать все страницы окна
+4. Логировать прогресс: pages / totalRecords / inserted / updated
+```
+
 ### Интервалы синхронизации
 
 | Data Type | Interval | Strategy |
@@ -574,3 +585,4 @@ GET /indigate-payin-svc/api/v1/payin/transaction/fetch?transactionId={txn_id}
 5. **Total Records**: ~140,000+ Pay-In транзакций, ~14,000 страниц
 6. **Currency**: Только INR (индийские рупии)
 7. **Country**: Только IN (Индия)
+8. **Response Format**: В некоторых ответах `success` может отсутствовать, ориентируйтесь на `statusCode: 200`, `status: "OK"` и наличие поля `data`.
